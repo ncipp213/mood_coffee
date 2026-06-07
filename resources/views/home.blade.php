@@ -1,28 +1,152 @@
-{{-- resources/views/home.blade.php --}}
-@extends('layouts.app') {{-- menggunakan layout master --}}
+@extends('layouts.app')
+
+@section('title', 'Menu Kopi')
 
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8 text-coffee">Menu Kopi Kami</h1>
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        @foreach($coffees as $coffee)
-        <div class="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300">
-            <img src="{{ $coffee->image_url }}" alt="{{ $coffee->name }}" class="w-full h-48 object-cover">
-            <div class="p-4">
-                <div class="flex justify-between items-start mb-2">
-                    <h2 class="text-xl font-semibold">{{ $coffee->name }}</h2>
-                    <span class="text-yellow-500">★ {{ number_format($coffee->rating, 1) }}</span>
-                </div>
-                <p class="text-gray-600 text-sm mb-3">{{ Str::limit($coffee->description, 80) }}</p>
-                <div class="flex justify-between items-center mt-4">
-                    <span class="text-lg font-bold text-coffee">{{ $coffee->price }}</span>
-                    <button class="bg-coffee hover:bg-coffee-dark text-white px-4 py-2 rounded-full text-sm transition-colors">
-                        + Keranjang
-                    </button>
-                </div>
+<div class="mb-8">
+    <h1 class="text-3xl font-bold text-center text-coffee dark:text-yellow-400">Menu Kopi Kami</h1>
+    <p class="text-center text-gray-600 dark:text-gray-300 mt-2">Pilih kopi favoritmu dan rasakan kenikmatannya</p>
+</div>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+    @foreach($coffees as $coffee)
+    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300">
+        <img src="{{ $coffee->image_url }}" alt="{{ $coffee->name }}" class="w-full h-48 object-cover">
+        <div class="p-4">
+            <div class="flex justify-between items-start">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-white">{{ $coffee->name }}</h2>
+                <button class="favorite-btn text-2xl focus:outline-none" data-coffee-id="{{ $coffee->id }}">
+                    <i class="fas fa-heart {{ Auth::check() && Auth::user()->favorites->contains('coffee_id', $coffee->id) ? 'text-red-500' : 'text-gray-400' }}"></i>
+                </button>
+            </div>
+            <p class="text-gray-600 dark:text-gray-300 text-sm mt-2">{{ Str::limit($coffee->description, 80) }}</p>
+            <div class="flex justify-between items-center mt-4">
+                <span class="text-lg font-bold text-coffee dark:text-yellow-400">{{ $coffee->price }}</span>
+                <button class="add-to-cart bg-coffee hover:bg-coffee-dark text-white px-4 py-2 rounded-full text-sm transition"
+                        data-coffee-id="{{ $coffee->id }}"
+                        data-name="{{ $coffee->name }}"
+                        data-image="{{ $coffee->image_url }}"
+                        data-price="{{ $coffee->price }}">
+                    <i class="fas fa-cart-plus mr-1"></i> Keranjang
+                </button>
             </div>
         </div>
-        @endforeach
+    </div>
+    @endforeach
+</div>
+
+<!-- Modal untuk memilih susu & ukuran (tersembunyi) -->
+<div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden transition-all">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+        <h3 class="text-xl font-bold mb-4 dark:text-white">Pilih Opsi</h3>
+        <input type="hidden" id="modalCoffeeId">
+        <input type="hidden" id="modalCoffeeName">
+        <input type="hidden" id="modalCoffeeImage">
+        <input type="hidden" id="modalCoffeePrice">
+        <div class="mb-4">
+            <label class="block text-gray-700 dark:text-gray-300 mb-2">Jenis Susu</label>
+            <select id="milkSelect" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="Regular Milk">Regular Milk</option>
+                <option value="Oat Milk">Oat Milk</option>
+                <option value="Almond Milk">Almond Milk</option>
+                <option value="Soy Milk">Soy Milk</option>
+            </select>
+        </div>
+        <div class="mb-4">
+            <label class="block text-gray-700 dark:text-gray-300 mb-2">Ukuran</label>
+            <select id="sizeSelect" class="w-full border rounded px-3 py-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <option value="Small">Small (+Rp 0)</option>
+                <option value="Medium">Medium (+Rp 5.000)</option>
+                <option value="Large">Large (+Rp 10.000)</option>
+            </select>
+        </div>
+        <div class="flex justify-end space-x-3 mt-6">
+            <button id="cancelModal" class="px-4 py-2 bg-gray-300 rounded hover:bg-gray-400">Batal</button>
+            <button id="confirmAddToCart" class="px-4 py-2 bg-coffee text-white rounded hover:bg-coffee-dark">Tambah ke Keranjang</button>
+        </div>
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+    // CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+
+    // Favorite toggle
+    document.querySelectorAll('.favorite-btn').forEach(btn => {
+        btn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            const coffeeId = this.dataset.coffeeId;
+            const icon = this.querySelector('i');
+            try {
+                const res = await fetch(`/favorites/toggle/${coffeeId}`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                const data = await res.json();
+                if (data.status === 'added') {
+                    icon.classList.remove('text-gray-400');
+                    icon.classList.add('text-red-500');
+                } else if (data.status === 'removed') {
+                    icon.classList.remove('text-red-500');
+                    icon.classList.add('text-gray-400');
+                }
+            } catch (err) { console.error(err); }
+        });
+    });
+
+    // Modal logic
+    const modal = document.getElementById('cartModal');
+    const addButtons = document.querySelectorAll('.add-to-cart');
+    let currentCoffee = {};
+
+    addButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            currentCoffee = {
+                id: btn.dataset.coffeeId,
+                name: btn.dataset.name,
+                image: btn.dataset.image,
+                price: btn.dataset.price
+            };
+            document.getElementById('modalCoffeeId').value = currentCoffee.id;
+            document.getElementById('modalCoffeeName').value = currentCoffee.name;
+            document.getElementById('modalCoffeeImage').value = currentCoffee.image;
+            document.getElementById('modalCoffeePrice').value = currentCoffee.price;
+            modal.classList.remove('hidden');
+        });
+    });
+
+    document.getElementById('cancelModal').addEventListener('click', () => {
+        modal.classList.add('hidden');
+    });
+
+    document.getElementById('confirmAddToCart').addEventListener('click', async () => {
+        const coffeeId = document.getElementById('modalCoffeeId').value;
+        const milk = document.getElementById('milkSelect').value;
+        const size = document.getElementById('sizeSelect').value;
+        try {
+            const res = await fetch(`/cart/add/${coffeeId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ milk, size })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Item ditambahkan ke keranjang!');
+                modal.classList.add('hidden');
+            } else {
+                alert('Gagal menambahkan: ' + data.message);
+            }
+        } catch (err) {
+            alert('Error: ' + err);
+        }
+    });
+</script>
+@endpush

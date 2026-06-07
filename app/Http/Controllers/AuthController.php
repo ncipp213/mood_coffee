@@ -29,9 +29,54 @@ class AuthController extends Controller
             ]);
             
             // Login otomatis setelah registrasi
-            auth::login($user);
+            Auth::login($user);
             
             // Arahkan ke halaman utama
             return redirect()->route('home');
         }
+
+        public function storeTheme(Request $request)
+        {
+            $request->session()->put('theme', $request->theme);
+            return response()->json(['success' => true]);
+        }
+
+        // 1. Fungsi untuk menampilkan halaman login
+    public function showLogin()
+    {
+        return view('auth.login'); // Pastikan nama file kamu di resources/views/auth/login.blade.php
+    }
+
+    // 2. Fungsi untuk memproses login
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'username' => 'required|string', // sesuaikan dengan field input form-mu (username/email)
+            'password' => 'required|string',
+        ]);
+
+        if (Auth::attempt($credentials)) {
+            $request->session()->regenerate();
+            return redirect()->intended('/'); // Diarahkan ke halaman utama setelah login sukses
+        }
+
+        return back()->withErrors([
+            'username' => 'Username atau password salah.',
+        ])->onlyInput('username');
+    }
+
+    // 3. Fungsi untuk menampilkan halaman register
+    public function showRegister()
+    {
+        return view('auth.register'); // Pastikan nama file kamu di resources/views/auth/register.blade.php
+    }
+
+    // 4. Fungsi untuk logout
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/login');
+    }
 }
