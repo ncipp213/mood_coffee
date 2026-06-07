@@ -5,13 +5,20 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Mood Coffee - @yield('title', 'Home')</title>
-    <!-- Tailwind CSS + Font Awesome -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Custom CSS untuk dark mode override -->
+    <!-- Custom CSS untuk dark mode dan animasi -->
     <style>
+        /* Warna khas kopi */
+        .bg-coffee { background-color: #6F4E37; }
+        .hover\:bg-coffee-dark:hover { background-color: #5A3A2A; }
+        .text-coffee { color: #6F4E37; }
+        .border-coffee { border-color: #6F4E37; }
+        
         /* Dark mode styles */
-        html.dark {
+        .dark body {
             background-color: #1a202c;
             color: #f7fafc;
         }
@@ -21,14 +28,30 @@
         .dark .text-gray-600 { color: #cbd5e0; }
         .dark .border-gray-200 { border-color: #4a5568; }
         .dark .shadow-md { box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3); }
-        .dark .bg-coffee { background-color: #b7791f; }
-        .dark .hover\:bg-coffee-dark:hover { background-color: #975a0e; }
         
-        .bg-coffee { background-color: #6f4e37; }
-        .hover\:bg-coffee-dark:hover { background-color: #5a3a2a; }
-        .text-coffee { color: #6f4e37; }
-        /* Transisi halus */
-        body, button, a, div { transition: background-color 0.2s ease, color 0.2s ease; }
+        /* Animasi transisi halus */
+        * {
+            transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+        }
+        
+        /* Efek hover pada card */
+        .coffee-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .coffee-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+        
+        /* Loader animasi */
+        .loader {
+            border-top-color: #6F4E37;
+            animation: spinner 0.6s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
     @stack('styles')
 </head>
@@ -49,7 +72,7 @@
                 @endauth
             </div>
 
-            <!-- Dark/Light Mode Toggle (Tengah) -->
+            <!-- Dark/Light Mode Toggle -->
             <button id="darkModeToggle" class="text-gray-600 dark:text-gray-300 focus:outline-none">
                 <i class="fas fa-moon text-xl dark:hidden"></i>
                 <i class="fas fa-sun text-xl hidden dark:inline"></i>
@@ -106,12 +129,10 @@
         &copy; {{ date('Y') }} Mood Coffee. All rights reserved.
     </footer>
 
-    <!-- JavaScript untuk Dark Mode dan Interaksi -->
+    <!-- JavaScript untuk Dark Mode -->
     <script>
-        // Dark mode toggle
         const toggle = document.getElementById('darkModeToggle');
         const html = document.documentElement;
-        // Cek localStorage
         if (localStorage.getItem('theme') === 'dark') {
             html.classList.add('dark');
         } else {
@@ -121,7 +142,6 @@
             html.classList.toggle('dark');
             const theme = html.classList.contains('dark') ? 'dark' : 'light';
             localStorage.setItem('theme', theme);
-            // Kirim ke server jika perlu (opsional)
             fetch('{{ route("theme.store") }}', {
                 method: 'POST',
                 headers: {

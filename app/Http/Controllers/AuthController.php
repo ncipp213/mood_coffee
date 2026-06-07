@@ -5,78 +5,93 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-        public function register(Request $request)
-        {
-            // Validasi data dari form
-            $validated = $request->validate([
-                'username' => 'required|string|max:255',
-                'email' => 'required|string|email|max:255|unique:users',
-                'phone' => 'required|string|max:15',
-                'address' => 'required|string',
-                'password' => 'required|string|min:6|confirmed',
-            ]);
-            
-            // Simpan ke database, password di-hash untuk keamanan
-            $user = User::create([
-                'username' => $validated['username'],
-                'email' => $validated['email'],
-                'phone' => $validated['phone'],
-                'address' => $validated['address'],
-                'password' => bcrypt($validated['password']),
-            ]);
-            
-            // Login otomatis setelah registrasi
-            Auth::login($user);
-            
-            // Arahkan ke halaman utama
-            return redirect()->route('home');
-        }
-
-        public function storeTheme(Request $request)
-        {
-            $request->session()->put('theme', $request->theme);
-            return response()->json(['success' => true]);
-        }
-
-        // 1. Fungsi untuk menampilkan halaman login
-    public function showLogin()
+    // Menampilkan form register
+    public function showRegister()
     {
-        return view('auth.login'); // Pastikan nama file kamu di resources/views/auth/login.blade.php
+        return view('auth.register');
     }
 
-    // 2. Fungsi untuk memproses login
+    // Proses register
+    public function register(Request $request)
+    {
+        $validated = $request->validate([
+            'username' => 'required|string|max:255',
+            'email' => 'required|string|email|max:255|unique:users',
+            'phone' => 'required|string|max:15',
+            'address' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        $user = User::create([
+            'username' => $validated['username'],
+            'email' => $validated['email'],
+            'phone' => $validated['phone'],
+            'address' => $validated['address'],
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        Auth::login($user);
+        return redirect()->route('home')->with('success', 'Selamat datang, ' . $user->username . '!');
+    }
+
+    // Menampilkan form login
+    public function showLogin()
+    {
+        return view('auth.login');
+    }
+
+    // Proses login
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'username' => 'required|string', // sesuaikan dengan field input form-mu (username/email)
-            'password' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required',
         ]);
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
-            return redirect()->intended('/'); // Diarahkan ke halaman utama setelah login sukses
+            return redirect()->intended(route('home'))->with('success', 'Login berhasil!');
         }
 
         return back()->withErrors([
-            'username' => 'Username atau password salah.',
-        ])->onlyInput('username');
+            'email' => 'Email atau password salah.',
+        ])->onlyInput('email');
     }
 
-    // 3. Fungsi untuk menampilkan halaman register
-    public function showRegister()
+    // Guest login (tanpa password, langsung buat user sementara)
+    public function guestLogin(Request $request)
     {
-        return view('auth.register'); // Pastikan nama file kamu di resources/views/auth/register.blade.php
+        // Cari atau buat user guest dengan email unik
+        $guestEmail = 'guest_' . uniqid() . '@moodcoffee.local';
+        $user = User::create([
+            'username' => 'Guest_' . rand(100, 999),
+            'email' => $guestEmail,
+            'phone' => '-',
+            'address' => 'Guest address',
+            'password' => Hash::make(uniqid()),
+        ]);
+
+        Auth::login($user);
+        return redirect()->route('home')->with('info', 'Anda login sebagai tamu. Data tidak akan tersimpan secara permanen.');
     }
 
-    // 4. Fungsi untuk logout
+    // Logout
     public function logout(Request $request)
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-        return redirect('/login');
+        return redirect('/login')->with('success', 'Anda telah logout.');
+    }
+
+    // Menyimpan tema (dark/light) ke session
+    public function storeTheme(Request $request)
+    {
+        $request->session()->put('theme', $request->theme);
+        return response()->json(['success' => true]);
     }
 }

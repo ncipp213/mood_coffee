@@ -10,7 +10,7 @@
 
 <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
     @foreach($coffees as $coffee)
-    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300">
+    <div class="coffee-card bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden hover:shadow-xl transition duration-300">
         <img src="{{ $coffee->image_url }}" alt="{{ $coffee->name }}" class="w-full h-48 object-cover">
         <div class="p-4">
             <div class="flex justify-between items-start">
@@ -35,9 +35,9 @@
     @endforeach
 </div>
 
-<!-- Modal untuk memilih susu & ukuran (tersembunyi) -->
+<!-- Modal untuk memilih susu & ukuran -->
 <div id="cartModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden transition-all">
-    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4">
+    <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-md mx-4 transform transition-all scale-95 opacity-0" id="modalContent">
         <h3 class="text-xl font-bold mb-4 dark:text-white">Pilih Opsi</h3>
         <input type="hidden" id="modalCoffeeId">
         <input type="hidden" id="modalCoffeeName">
@@ -66,12 +66,27 @@
         </div>
     </div>
 </div>
+
+<!-- Toast Notification -->
+<div id="toast" class="fixed bottom-4 right-4 bg-gray-800 text-white px-4 py-2 rounded-lg shadow-lg transition-opacity duration-300 opacity-0 pointer-events-none z-50"></div>
 @endsection
 
 @push('scripts')
 <script>
-    // CSRF token
     const csrfToken = document.querySelector('meta[name="csrf-token"]').content;
+    const toast = document.getElementById('toast');
+    
+    function showToast(message, isError = false) {
+        toast.textContent = message;
+        toast.classList.remove('bg-gray-800', 'bg-red-500');
+        toast.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
+        toast.classList.remove('opacity-0');
+        toast.classList.add('opacity-100');
+        setTimeout(() => {
+            toast.classList.remove('opacity-100');
+            toast.classList.add('opacity-0');
+        }, 3000);
+    }
 
     // Favorite toggle
     document.querySelectorAll('.favorite-btn').forEach(btn => {
@@ -91,16 +106,22 @@
                 if (data.status === 'added') {
                     icon.classList.remove('text-gray-400');
                     icon.classList.add('text-red-500');
+                    showToast('Ditambahkan ke favorit!');
                 } else if (data.status === 'removed') {
                     icon.classList.remove('text-red-500');
                     icon.classList.add('text-gray-400');
+                    showToast('Dihapus dari favorit');
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error(err);
+                showToast('Terjadi kesalahan', true);
+            }
         });
     });
 
     // Modal logic
     const modal = document.getElementById('cartModal');
+    const modalContent = document.getElementById('modalContent');
     const addButtons = document.querySelectorAll('.add-to-cart');
     let currentCoffee = {};
 
@@ -117,17 +138,32 @@
             document.getElementById('modalCoffeeImage').value = currentCoffee.image;
             document.getElementById('modalCoffeePrice').value = currentCoffee.price;
             modal.classList.remove('hidden');
+            setTimeout(() => {
+                modalContent.classList.remove('scale-95', 'opacity-0');
+                modalContent.classList.add('scale-100', 'opacity-100');
+            }, 10);
         });
     });
 
     document.getElementById('cancelModal').addEventListener('click', () => {
-        modal.classList.add('hidden');
+        modalContent.classList.remove('scale-100', 'opacity-100');
+        modalContent.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+        }, 200);
     });
 
     document.getElementById('confirmAddToCart').addEventListener('click', async () => {
         const coffeeId = document.getElementById('modalCoffeeId').value;
         const milk = document.getElementById('milkSelect').value;
         const size = document.getElementById('sizeSelect').value;
+        
+        // Disable button untuk mencegah double submit
+        const confirmBtn = document.getElementById('confirmAddToCart');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner loader inline-block w-4 h-4 mr-2"></i> Menambah...';
+        confirmBtn.disabled = true;
+        
         try {
             const res = await fetch(`/cart/add/${coffeeId}`, {
                 method: 'POST',
@@ -139,13 +175,16 @@
             });
             const data = await res.json();
             if (data.success) {
-                alert('Item ditambahkan ke keranjang!');
-                modal.classList.add('hidden');
+                showToast('Item ditambahkan ke keranjang!');
+                document.getElementById('cancelModal').click();
             } else {
-                alert('Gagal menambahkan: ' + data.message);
+                showToast('Gagal menambahkan: ' + data.message, true);
             }
         } catch (err) {
-            alert('Error: ' + err);
+            showToast('Error: ' + err, true);
+        } finally {
+            confirmBtn.innerHTML = originalText;
+            confirmBtn.disabled = false;
         }
     });
 </script>

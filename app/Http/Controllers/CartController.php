@@ -6,6 +6,7 @@ use App\Models\Coffee;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
@@ -52,5 +53,16 @@ class CartController extends Controller
         Gate::authorize('delete', $cart);
         $cart->delete();
         return response()->json(['success' => true]);
+    }
+
+    public function getTotals()
+    {
+        $cartItems = Auth::user()->carts;
+        $totalQuantity = Auth::user()->carts()->sum('quantity');
+        $totalPrice = Auth::user()->carts()->sum(DB::raw('price * quantity'));
+        return response()->json([
+            'totalQuantity' => $totalQuantity,
+            'totalPrice' => $totalPrice
+        ]);
     }
 }
