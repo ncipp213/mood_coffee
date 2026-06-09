@@ -1,47 +1,34 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\AuthController;
-use App\Http\Controllers\CoffeeController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MenuController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\FavoriteController;
-use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
 
-// Guest routes (belum login)
-Route::middleware('guest')->group(function () {
-    Route::get('/register', [AuthController::class, 'showRegister'])->name('register');
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::get('/login', [AuthController::class, 'showLogin'])->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/guest-login', [AuthController::class, 'guestLogin'])->name('guest.login');
-});
+Route::get('/', [MenuController::class, 'home'])->name('home');
 
-// Auth routes (sudah login)
+// Dashboard (redirect ke home setelah login)
+Route::get('/dashboard', function () {
+    return redirect()->route('home');
+})->middleware(['auth'])->name('dashboard');
+
 Route::middleware('auth')->group(function () {
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-    Route::post('/theme', [AuthController::class, 'storeTheme'])->name('theme.store');
-
-    Route::get('/', [CoffeeController::class, 'index'])->name('home');
-
-    // Favorites
-    Route::prefix('favorites')->group(function () {
-        Route::get('/', [FavoriteController::class, 'index'])->name('favorites.index');
-        Route::post('/toggle/{coffeeId}', [FavoriteController::class, 'toggle']);
-        Route::delete('/{id}', [FavoriteController::class, 'destroy'])->name('favorites.destroy');
-    });
-
-    // Cart
-    Route::prefix('cart')->group(function () {
-        Route::get('/', [CartController::class, 'index'])->name('cart.index');
-        Route::post('/add/{coffeeId}', [CartController::class, 'add']);
-        Route::put('/update/{cartId}', [CartController::class, 'update']);
-        Route::delete('/remove/{cartId}', [CartController::class, 'remove']);
-        Route::get('/totals', [CartController::class, 'getTotals']); // tambahan untuk update total via AJAX
-    });
-
     // Profile
-    Route::prefix('profile')->group(function () {
-        Route::get('/', [ProfileController::class, 'index'])->name('profile.index');
-        Route::put('/', [ProfileController::class, 'update'])->name('profile.update');
-    });
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Favorites
+    Route::get('/favorites', [FavoriteController::class, 'index'])->name('favorites.index');
+    Route::post('/favorites/{menu}', [FavoriteController::class, 'toggle'])->name('favorites.toggle');
+    
+    // Cart
+    Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
+    Route::post('/cart/add/{menu}', [CartController::class, 'add'])->name('cart.add');
+    Route::patch('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
+    Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
+    Route::delete('/cart/clear', [CartController::class, 'clear'])->name('cart.clear');
 });
+
+require __DIR__.'/auth.php';

@@ -9,22 +9,19 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    // file: database/migrations/...create_carts_table.php
     public function up(): void
     {
         Schema::create('carts', function (Blueprint $table) {
             $table->id();
-            // Struktur ini sama persis dengan model CartItem di Flutter
-            $table->string('cart_id')->unique(); // id unik untuk item keranjang
-            $table->string('name');
-            $table->string('image_url');
-            $table->string('milk'); // opsi susu
-            $table->string('size'); // ukuran minuman
-            $table->integer('price');
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('session_id')->nullable(); // Untuk guest user
+            $table->foreignId('menu_id')->constrained()->onDelete('cascade');
+            $table->string('menu_name');
+            $table->decimal('price', 10, 2);
             $table->integer('quantity')->default(1);
-            // Relasi ke tabel users
-            $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->timestamps();
+            
+            $table->index(['user_id', 'session_id']);
         });
     }
 

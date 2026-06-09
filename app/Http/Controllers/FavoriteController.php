@@ -1,36 +1,27 @@
 <?php
+
 namespace App\Http\Controllers;
+
+use App\Models\Menu;
 use Illuminate\Http\Request;
-use App\Models\Favorite;
-use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 
 class FavoriteController extends Controller
 {
     public function index()
     {
-        $favorites = Auth::user()->favorites()->with('coffee')->get();
-        return view('favorites.index', compact('favorites'));
+        $favorites = Auth::user()->favorites;
+        return view('favorites', compact('favorites'));
     }
-    
-    public function toggle(int $coffeeId)
+
+    public function toggle(Menu $menu)
     {
-        $user = Auth::user();
-        $favorite = $user->favorites()->where('coffee_id', $coffeeId)->first();
-        if ($favorite) {
-            $favorite->delete();
-            return response()->json(['status' => 'removed']);
+        $isFavorited = Auth::user()->toggleFavorite($menu->id);
+        
+        if ($isFavorited) {
+            return back()->with('success', 'Menu ditambahkan ke favorit!');
         } else {
-            $user->favorites()->create(['coffee_id' => $coffeeId]);
-            return response()->json(['status' => 'added']);
+            return back()->with('info', 'Menu dihapus dari favorit.');
         }
-    }
-    
-    public function destroy(int $id)
-    {
-        $favorite = Favorite::findOrFail($id);
-        Gate::authorize('delete', $favorite);
-        $favorite->delete();
-        return redirect()->route('favorites.index')->with('success', 'Dihapus dari favorit');
     }
 }

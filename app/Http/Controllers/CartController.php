@@ -1,68 +1,110 @@
 <?php
+
 namespace App\Http\Controllers;
-use Illuminate\Http\Request;
+
 use App\Models\Cart;
-use App\Models\Coffee;
-use Illuminate\Support\Str;
+use App\Models\Menu;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
 
 class CartController extends Controller
 {
     public function index()
     {
-        $cartItems = Auth::user()->carts()->get(); // Tambah tanda kurung dan ->get()
+        if (Auth::check()) {
+            $cartItems = Cart::where('user_id', Auth::id())->get();
+        } else {
+            $sessionId = session()->getId();
+            $cartItems = Cart::where('session_id', $sessionId)->get();
+        }
+        
         $total = $cartItems->sum(function($item) {
             return $item->price * $item->quantity;
         });
-        return view('cart.index', compact('cartItems', 'total'));
-        }
-    
-    public function add(int $coffeeId, Request $request)
-    {
-        $request->validate(['milk' => 'required', 'size' => 'required']);
-        $coffee = Coffee::findOrFail($coffeeId);
-        $price = (int) filter_var($coffee->price, FILTER_SANITIZE_NUMBER_INT);
-        // tambahkan biaya ukuran
-        $sizeExtra = ['Small'=>0, 'Medium'=>5000, 'Large'=>10000][$request->size];
-        Cart::create([
-            'cart_id' => (string) Str::uuid(),
-            'user_id' => Auth::id(),
-            'name' => $coffee->name,
-            'image_url' => $coffee->image_url,
-            'milk' => $request->milk,
-            'size' => $request->size,
-            'price' => $price + $sizeExtra,
-            'quantity' => 1
-        ]);
-        return response()->json(['success' => true]);
-    }
-    
-    public function update(int $cartId, Request $request)
-    {
-        $cart = Cart::findOrFail($cartId);
-        Gate::authorize('update', $cart);
-        $cart->update(['quantity' => $request->quantity]);
-        return response()->json(['success' => true]);
-    }
-    
-    public function remove(int $cartId)
-    {
-        $cart = Cart::findOrFail($cartId);
-        Gate::authorize('delete', $cart);
-        $cart->delete();
-        return response()->json(['success' => true]);
+        
+        return view('cart', compact('cartItems', 'total'));
     }
 
-    public function getTotals()
+    public function add(Menu $menu)
     {
-        $cartItems = Auth::user()->carts;
-        $totalQuantity = Auth::user()->carts()->sum('quantity');
-        $totalPrice = Auth::user()->carts()->sum(DB::raw('price * quantity'));
-        return response()->json([
-            'totalQuantity' => $totalQuantity,
-            'totalPrice' => $totalPrice
-        ]);
+        $quantity = request()->input('quantity', 1);
+        
+        if (Auth::check()) {
+            $cart = Cart::where('user_id', Auth::id())
+                        ->where('menu_id', $menu->id)
+                        ->first();
+                        
+            if ($cart) {
+                $cart->increment('quantity', $quantity);
+            } else {
+                Cart::create([
+                    'user_id' => Auth::id(),
+                    'menu_id' => $menu->id,
+                    'menu_name' => $menu->name,
+                    'price' => $menu->price,
+                    'quantity' => $quantity,
+                ]);
+            }
+        } else {
+            $sessionId = session()->getId();
+            $cart = Cart::where('session_id', $sessionId)
+                        ->where('menu_id', $menu->id)
+                        ->first();
+                        
+            if ($cart) {
+                $cart->increment('quantity', $quantity);
+            } else {
+                Cart::create([
+                    'session_id' => $sessionId,
+                    'menu_id' => $menu->id,
+                    'menu_name' => $menu->name,
+                    'price' => $menu->price,
+                    'quantity' => $quantity,
+                ]);
+            }
+        }
+        
+        return redirect()->route('cart.index')->with('success', "{$menu->name} ditambahkan ke keranjang!");
+    }
+
+    public function update($id)
+    {
+        $quantity = request()->input('quantity', 1);
+        $cart = Cart::findOrFail($id);
+        
+        // Cek kepemilikan
+        if (Auth::check() && $cart->user_id != Auth::id()) {
+            abort(403);
+        }
+        if (!Auth::check() && $cart->session_id != session()->getId()) {
+            abort(403);
+        }
+        
+        if ($quantity <= 0) {
+            $cart->delete();
+        } else {
+            $cart->update(['quantity' => $quantity]);
+        }
+        
+        return redirect()->route('cart.index')->with('success', 'Keranjang diperbarui!');
+    }
+
+    public function remove($id)
+    {
+        $cart = Cart::findOrFail($id);
+        $cart->delete();
+        
+        return redirect()->route('cart.index')->with('success', 'Item dihapus dari keranjang!');
+    }
+
+    public function clear()
+    {
+        if (Auth::check()) {
+            Cart::where('user_id', Auth::id())->delete();
+        } else {
+            Cart::where('session_id', session()->getId())->delete();
+        }
+        
+        return redirect()->route('cart.index')->with('success', 'Keranjang kosong!');
     }
 }

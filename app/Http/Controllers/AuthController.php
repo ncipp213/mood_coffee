@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\Cart; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,12 @@ class AuthController extends Controller
         ]);
 
         Auth::login($user);
+
+
+        $sessionId = session()->getId();
+        Cart::where('session_id', $sessionId)
+            ->update(['user_id' => Auth::id(), 'session_id' => null]);
+
         return redirect()->route('home')->with('success', 'Selamat datang, ' . $user->username . '!');
     }
 
@@ -54,31 +61,21 @@ class AuthController extends Controller
 
         if (Auth::attempt($credentials)) {
             $request->session()->regenerate();
+
+            $sessionId = session()->getId();
+            Cart::where('session_id', $sessionId)
+                ->update(['user_id' => Auth::id(), 'session_id' => null]);
+
             return redirect()->intended(route('home'))->with('success', 'Login berhasil!');
         }
-
+            
+        // Jika login gagal
         return back()->withErrors([
             'email' => 'Email atau password salah.',
         ])->onlyInput('email');
     }
 
-    // Guest login (tanpa password, langsung buat user sementara)
-    public function guestLogin(Request $request)
-    {
-        // Cari atau buat user guest dengan email unik
-        $guestEmail = 'guest_' . uniqid() . '@moodcoffee.local';
-        $user = User::create([
-            'username' => 'Guest_' . rand(100, 999),
-            'email' => $guestEmail,
-            'phone' => '-',
-            'address' => 'Guest address',
-            'password' => Hash::make(uniqid()),
-        ]);
-
-        Auth::login($user);
-        return redirect()->route('home')->with('info', 'Anda login sebagai tamu. Data tidak akan tersimpan secara permanen.');
-    }
-
+        
     // Logout
     public function logout(Request $request)
     {
