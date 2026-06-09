@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Cart;
 use App\Models\Menu;
+use App\Models\Order;
+use App\Models\OrderItem;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controllers\HasMiddleware;
@@ -83,5 +85,52 @@ class CartController extends Controller implements HasMiddleware
         Auth::user()->carts()->delete();
 
         return redirect()->route('home')->with('success', 'Pesanan berhasil! Terima kasih sudah berbelanja.');
+    }
+    public function checkoutForm() {
+        $carts = Auth::user()->carts()->with('menu')->get();
+        return view('checkout.index', compact('carts'));
+    }
+
+    public function processCheckout(Request $request) {
+        $request->validate([
+            'order_type' => 'required|in:dine_in,take_away',
+            'payment_method' => 'required|in:cash,qris'
+        ]);
+
+        $carts = Auth::user()->carts()->with('menu')->get();
+        if($carts->isEmpty()) return back()->with('error', 'Keranjang kosong');
+
+        $subtotal = $carts->sum(fn($c) => $c->quantity * $c->unit_price);
+        $shipping = 2000;
+        $total = $subtotal + $shipping;
+
+        $order = Order::create([
+            'user_id' => Auth::id(),
+            'order_number' => 'ORD-'.strtoupper(uniqid()),
+            'order_type' => $request->order_type,
+            'payment_method' => $request->payment_method,
+            'subtotal' => $subtotal,
+            'shipping_cost' => $shipping,
+            'total' => $total,
+            'status' => 'pending',
+            'expires_at' => now()->addMinutes(10)
+        ]);
+
+        foreach($carts as $item) {
+            OrderItem::create([
+                'order_id' => $order->id,
+                'menu_id' => $item->menu_id,
+                'menu_name' => $item->menu->name,
+                'milk' => $item->milk,
+                'size' => $item->size,
+                'quantity' => $item->quantity,
+                'price' => $item->unit_price
+            ]);
+        }
+
+        // Kosongkan keranjang
+        Auth::user()->carts()->delete();
+
+        return redirect()->route('payment.show', $order);
     }
 }

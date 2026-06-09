@@ -11,7 +11,12 @@ use App\Models\Menu;
 
 class User extends Authenticatable
     {
-
+        use HasFactory, Notifiable;
+    protected $fillable = [
+        'username',
+        'email',
+        'password',
+    ];
         public function favorites()
     {
         return $this->hasMany(Favorite::class);
