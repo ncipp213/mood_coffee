@@ -10,60 +10,12 @@ class MenuSeeder extends Seeder
     public function run(): void
     {
         $menus = [
-            [
-                'name' => 'Cappuccino',
-                'slug' => 'cappuccino',
-                'description' => 'Rich espresso with creamy steamed milk and a layer of velvety foam',
-                'price' => 28000,
-                'rating' => 4.8,
-                'image_url' => '/images/cappuccino.jpg',
-                'category' => 'Menu Kopi'
-            ],
-            [
-                'name' => 'Gula Aren',
-                'slug' => 'gula-aren',
-                'description' => 'Palm sugar sweetness perfectly blended with rich espresso and milk',
-                'price' => 25000,
-                'rating' => 4.6,
-                'image_url' => '/images/gula-aren.jpg',
-                'category' => 'Menu Kopi'
-            ],
-            [
-                'name' => 'Latte',
-                'slug' => 'latte',
-                'description' => 'Smooth and creamy latte with a perfect espresso-to-milk ratio',
-                'price' => 30000,
-                'rating' => 4.7,
-                'image_url' => '/images/latte.jpg',
-                'category' => 'Menu Kopi'
-            ],
-            [
-                'name' => 'Ramell Latte',
-                'slug' => 'ramell-latte',
-                'description' => 'Caramel infused latte with a hint of vanilla and whipped cream',
-                'price' => 32000,
-                'rating' => 4.9,
-                'image_url' => '/images/ramell-latte.jpg',
-                'category' => 'Menu Kopi'
-            ],
-            [
-                'name' => 'Coconut Cappuccino',
-                'slug' => 'coconut-cappuccino',
-                'description' => 'Creamy coconut-infused cappuccino with a tropical twist',
-                'price' => 33000,
-                'rating' => 4.8,
-                'image_url' => '/images/coconut-cappuccino.jpg',
-                'category' => 'Menu Kopi'
-            ],
-            [
-                'name' => 'Iced Americano',
-                'slug' => 'iced-americano',
-                'description' => 'Refreshing cold brew espresso with chilled water and ice',
-                'price' => 22000,
-                'rating' => 4.4,
-                'image_url' => '/images/iced-americano.jpg',
-                'category' => 'Menu Kopi'
-            ],
+            ['name' => 'Cappuccino', 'description' => 'Rich espresso with creamy steamed milk and a layer of foam', 'price' => 28000, 'rating' => 4.8, 'category' => 'Hot Coffee'],
+            ['name' => 'Gula Aren', 'description' => 'Palm sugar sweetness blended with premium espresso and milk', 'price' => 25000, 'rating' => 4.6, 'category' => 'Signature'],
+            ['name' => 'Latte', 'description' => 'Smooth and creamy latte with rich espresso', 'price' => 30000, 'rating' => 4.7, 'category' => 'Hot Coffee'],
+            ['name' => 'Caramel Latte', 'description' => 'Caramel infused latte with a hint of vanilla', 'price' => 32000, 'rating' => 4.9, 'category' => 'Signature'],
+            ['name' => 'Coconut Cappuccino', 'description' => 'Creamy coconut flavor blended with rich cappuccino', 'price' => 33000, 'rating' => 4.8, 'category' => 'Signature'],
+            ['name' => 'Iced Americano', 'description' => 'Refreshing cold brew with a bold espresso kick', 'price' => 22000, 'rating' => 4.4, 'category' => 'Iced Coffee'],
         ];
 
         foreach ($menus as $menu) {
