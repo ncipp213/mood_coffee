@@ -37,8 +37,25 @@ class MenuController extends Controller implements HasMiddleware
         return redirect()->route('menus.index')->with('success', 'Menu berhasil ditambahkan!');
     }
 
-    public function show(Menu $menu)
+    public function show($id)
     {
+        // Coba cari berdasarkan ID, jika tidak ada tampilkan 404
+        $menu = \App\Models\Menu::find($id);
+        if (!$menu) {
+            // Jika menggunakan dummy data (karena database kosong) fallback ke array
+            $dummyMenus = [
+                0 => (object)['id'=>0,'name'=>'Espresso','price'=>18000,'rating'=>4.5,'description'=>'Kopi hitam pekat dengan crema kental','image_url'=>'https://picsum.photos/id/1/400/300'],
+                1 => (object)['id'=>1,'name'=>'Americano','price'=>22000,'rating'=>4.3,'description'=>'Espresso dengan air panas, ringan dan bold','image_url'=>'https://picsum.photos/id/2/400/300'],
+                2 => (object)['id'=>2,'name'=>'Latte','price'=>30000,'rating'=>4.7,'description'=>'Smooth and creamy latte with rich espresso','image_url'=>'https://picsum.photos/id/3/400/300'],
+                3 => (object)['id'=>3,'name'=>'Cappuccino','price'=>28000,'rating'=>4.8,'description'=>'Rich espresso with creamy milk foam','image_url'=>'https://picsum.photos/id/4/400/300'],
+                // ... tambahkan hingga 20 menu sesuai dummy di homepage
+            ];
+            if (isset($dummyMenus[$id])) {
+                $menu = $dummyMenus[$id];
+            } else {
+                abort(404);
+            }
+        }
         return view('menus.show', compact('menu'));
     }
 

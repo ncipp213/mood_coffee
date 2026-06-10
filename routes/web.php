@@ -14,7 +14,7 @@ Route::get('/', function () {
 Route::get('/home', [MenuController::class, 'index'])->name('home');
 
 // Routes untuk menu (CRUD)
-Route::resource('menus', MenuController::class);
+Route::resource('menus', App\Http\Controllers\MenuController::class);
 
 // Routes untuk favorite
 Route::middleware('auth')->group(function () {

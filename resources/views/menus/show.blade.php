@@ -1,8 +1,17 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-8">
-    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden">
+<div class="max-w-5xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-800 rounded-3xl shadow-xl overflow-hidden relative">
+        {{-- Tombol Favorite di pojok kanan atas --}}
+        @auth
+        <button id="favoriteBtn" data-menu-id="{{ $menu->id }}" class="absolute top-4 right-4 z-10 bg-white/80 dark:bg-gray-700/80 rounded-full p-2 hover:bg-amber-100 transition">
+            <svg id="favoriteIcon" class="w-6 h-6 text-red-500" fill="{{ auth()->user()->favorites->contains('menu_id', $menu->id) ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path>
+            </svg>
+        </button>
+        @endauth
+
         <div class="md:flex">
             {{-- Gambar --}}
             <div class="md:w-1/2 h-64 md:h-auto bg-amber-100">
@@ -54,6 +63,7 @@
                         <input type="hidden" name="milk" id="selectedMilk" value="Classic">
                         <input type="hidden" name="size" id="selectedSize" value="370ml">
                         <input type="hidden" name="unit_price" id="selectedPrice" value="{{ $menu->price }}">
+                        <input type="hidden" name="quantity" value="1">
                         <button type="submit" class="px-6 py-3 border-2 border-amber-600 text-amber-600 rounded-full hover:bg-amber-50 transition font-semibold">
                             🛒 Add to Cart
                         </button>
@@ -68,10 +78,11 @@
 </div>
 
 <script>
+    const basePrice = {{ $menu->price }};
     const priceMap = {
-        '280ml': {{ $menu->price - 3000 }},
-        '370ml': {{ $menu->price }},
-        '450ml': {{ $menu->price + 5000 }}
+        '280ml': basePrice - 3000,
+        '370ml': basePrice,
+        '450ml': basePrice + 5000
     };
     let selectedMilk = 'Classic';
     let selectedSize = '370ml';
@@ -100,5 +111,31 @@
     document.getElementById('orderNowBtn').addEventListener('click', function() {
         document.getElementById('addToCartForm').submit();
     });
+
+    // Favorite toggle AJAX
+    const favoriteBtn = document.getElementById('favoriteBtn');
+    if(favoriteBtn) {
+        favoriteBtn.addEventListener('click', function() {
+            const menuId = this.dataset.menuId;
+            fetch(`/favorites/${menuId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({ menu_id: menuId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                const icon = document.getElementById('favoriteIcon');
+                if(data.status === 'added') {
+                    icon.setAttribute('fill', 'currentColor');
+                } else {
+                    icon.setAttribute('fill', 'none');
+                }
+            });
+        });
+    }
 </script>
 @endsection

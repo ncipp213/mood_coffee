@@ -2,7 +2,7 @@
 
 @section('content')
 <div class="max-w-4xl mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">My Cart 🛍️</h1>
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-6">My Cart 🛒</h1>
 
     @if($carts->isEmpty())
         <div class="text-center py-12 bg-white dark:bg-gray-800 rounded-2xl shadow">
@@ -19,7 +19,7 @@
                     <div class="flex items-center gap-3 mt-2">
                         <form action="{{ route('cart.update', $item) }}" method="POST" class="flex items-center">
                             @csrf @method('PUT')
-                            <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="w-16 px-2 py-1 border rounded-lg">
+                            <input type="number" name="quantity" value="{{ $item->quantity }}" min="1" class="w-16 px-2 py-1 border rounded-lg dark:bg-gray-700">
                             <button type="submit" class="ml-2 text-blue-600 text-sm">Update</button>
                         </form>
                         <form action="{{ route('cart.destroy', $item) }}" method="POST">
@@ -30,7 +30,7 @@
                 </div>
                 <div class="text-right">
                     <p class="font-semibold">Rp {{ number_format($item->quantity * $item->unit_price,0,',','.') }}</p>
-                    <p class="text-xs text-gray-400">{{ $item->unit_price }} x {{ $item->quantity }}</p>
+                    <p class="text-xs text-gray-400">{{ number_format($item->unit_price,0,',','.') }} x {{ $item->quantity }}</p>
                 </div>
             </div>
             @endforeach
