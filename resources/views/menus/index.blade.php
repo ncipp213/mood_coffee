@@ -79,7 +79,7 @@
                             </div>
                         </div>
                         <p class="text-xs text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">{{ Str::limit($menu->description, 50) }}</p>
-                        <div class="mt-2 font-bold text-amber-700 dark:text-amber-400">Rp {{ number_format($menu->price,0,',','.') }}</div>
+                        <div class="mt-2 font-bold text-amber-700 dark:text-amber-400">Rp {{ number_format(floatval($menu->price ?? 0), 0, ',', '.') }}</div>
                     </div>
                 </div>
             </a>

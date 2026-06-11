@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MenuController;
 use App\Http\Controllers\FavoriteController;
@@ -13,6 +14,7 @@ Route::get('/', function () {
 
 Route::get('/home', [MenuController::class, 'index'])->name('home');
 
+Route::post('/register', [RegisteredUserController::class, 'store']);
 // Routes untuk menu (CRUD)
 Route::resource('menus', App\Http\Controllers\MenuController::class);
 

@@ -14,7 +14,7 @@ class Menu extends Model
     ];
 
     protected $casts = [
-        'price' => 'decimal:2',
+        'price' => 'float',
         'rating' => 'decimal:1',
         'is_available' => 'boolean',
     ];
