@@ -4,22 +4,21 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     {{-- Sapaan --}}
     <div class="mb-8">
-        <h1 class="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-amber-700 to-amber-900 bg-clip-text text-transparent">
-            Hey, {{ Auth::user()->name ?? 'Coffee Lover' }} ☕
+        <h1 class="text-3xl md:text-4xl font-extrabold text-amber-950 dark:text-amber-400">
+            Hey, {{ Auth::user()->username ?? 'Coffee Lover' }} ☕
         </h1>
         <p class="text-gray-600 dark:text-gray-300">Pilih seduhan favoritmu</p>
     </div>
 
-    {{-- Search Bar yang rapi --}}
     <div class="mb-10 max-w-md">
-        <div class="relative">
-            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-                </svg>
-            </div>
+        <div class="flex items-center w-full pl-4 pr-2 py-3.5 rounded-full border border-amber-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus-within:ring-2 focus-within:ring-amber-400 transition-all">
+            
+            <svg class="w-5 h-5 text-gray-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            
             <input type="text" id="searchInput" placeholder="Cari kopi..." 
-                   class="w-full pl-12 pr-4 py-3 rounded-full border border-amber-200 dark:border-gray-600 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm focus:ring-2 focus:ring-amber-400 focus:outline-none text-gray-700 dark:text-gray-200">
+                class="w-full bg-transparent border-0 pl-3 pr-2 py-1 focus:outline-none focus:ring-0 text-gray-700 dark:text-gray-200 placeholder-gray-400 text-base">
         </div>
     </div>
 
@@ -58,14 +57,14 @@
 
     {{-- Recommended for you --}}
     @if($recommended->count())
-    <div class="mb-12">
+    <div class="mb-12" id="recommendedSection">
         <h2 class="text-2xl font-bold text-amber-800 dark:text-amber-400 mb-4 flex items-center">
             <span class="mr-2">⭐</span> Recommended for you
         </h2>
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach($recommended as $menu)
             <a href="{{ route('menus.show', $menu->id) }}" class="block group">
-                <div class="bg-amber-100 dark:bg-stone-700 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div class="bg-amber-100 dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="h-36 overflow-hidden">
                         <img src="{{ $menu->image_url ?? 'https://picsum.photos/id/225/300/200' }}" class="w-full h-full object-cover group-hover:scale-105 transition">
                     </div>
@@ -95,7 +94,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="menuGrid">
             @foreach($allMenus as $menu)
             <a href="{{ route('menus.show', $menu->id) }}" class="block group" data-name="{{ strtolower($menu->name) }}">
-                <div class="menu-card bg-amber-100 dark:bg-stone-700 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                <div class="menu-card bg-amber-100 dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="relative h-36 overflow-hidden">
                         <img src="{{ $menu->image_url ?? 'https://picsum.photos/id/'.$loop->iteration.'/300/200' }}" class="w-full h-full object-cover group-hover:scale-105 transition">
                     </div>
@@ -120,13 +119,23 @@
 </div>
 
 <script>
-    // Live search yang berfungsi
+    // Live search yang berfungsi & menyembunyikan rekomendasi
     const searchInput = document.getElementById('searchInput');
     const menuItems = document.querySelectorAll('#menuGrid > a');
-    
+    const recommendedSection = document.getElementById('recommendedSection'); // Ambil elemen rekomendasi
+
     if (searchInput) {
         searchInput.addEventListener('keyup', function() {
             let keyword = this.value.toLowerCase();
+
+            // Sembunyikan rekomendasi jika ada teks yang diketik, tampilkan jika kosong
+            if (keyword.length > 0) {
+                if (recommendedSection) recommendedSection.style.display = 'none';
+            } else {
+                if (recommendedSection) recommendedSection.style.display = '';
+            }
+
+            // Filter menu utama
             menuItems.forEach(item => {
                 let name = item.getAttribute('data-name') || item.querySelector('h3').innerText.toLowerCase();
                 if (name.includes(keyword)) {
