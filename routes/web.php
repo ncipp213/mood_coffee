@@ -30,8 +30,12 @@ Route::middleware('auth')->group(function () {
     Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
     Route::put('/cart/{cart}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/{cart}', [CartController::class, 'destroy'])->name('cart.destroy');
-    Route::post('/cart/checkout', [CartController::class, 'checkout'])->name('cart.checkout');
+
+    Route::get('/checkout', [CartController::class, 'checkoutForm'])->name('checkout.form');
+    Route::post('/checkout', [CartController::class, 'processCheckout'])->name('checkout.process');
 });
+
+
 
 // Profile routes (Breeze default)
 Route::middleware('auth')->group(function () {

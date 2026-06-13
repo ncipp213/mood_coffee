@@ -10,14 +10,18 @@ use Laravel\Sanctum\HasApiTokens;
 use App\Models\Menu;
 
 class User extends Authenticatable
-    {
-        use HasFactory, Notifiable;
+{
+    use HasFactory, Notifiable;
+
     protected $fillable = [
         'username',
         'email',
+        'phone',
+        'address',
         'password',
     ];
-        public function favorites()
+
+    public function favorites()
     {
         return $this->hasMany(Favorite::class);
     }

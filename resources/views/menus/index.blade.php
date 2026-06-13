@@ -64,7 +64,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             @foreach($recommended as $menu)
             <a href="{{ route('menus.show', $menu->id) }}" class="block group">
-                <div class="bg-amber-100 dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                {{-- UBAH KELAS UTAMA CARD DI BAWAH INI JADI GLASSMORPHISM --}}
+                <div class="bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-gray-700/40 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="h-36 overflow-hidden">
                         <img src="{{ $menu->image_url ?? 'https://picsum.photos/id/225/300/200' }}" class="w-full h-full object-cover group-hover:scale-105 transition">
                     </div>
@@ -94,7 +95,8 @@
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6" id="menuGrid">
             @foreach($allMenus as $menu)
             <a href="{{ route('menus.show', $menu->id) }}" class="block group" data-name="{{ strtolower($menu->name) }}">
-                <div class="menu-card bg-amber-100 dark:bg-gray-800 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                {{-- UBAH KELAS UTAMA CARD DI BAWAH INI JADI GLASSMORPHISM --}}
+                <div class="menu-card bg-white/40 dark:bg-gray-900/40 backdrop-blur-md border border-white/60 dark:border-gray-700/40 rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="relative h-36 overflow-hidden">
                         <img src="{{ $menu->image_url ?? 'https://picsum.photos/id/'.$loop->iteration.'/300/200' }}" class="w-full h-full object-cover group-hover:scale-105 transition">
                     </div>

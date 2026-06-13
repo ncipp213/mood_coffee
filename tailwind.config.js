@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
     export default {
-    darkMode: 'class', // Aktifkan dark mode dengan strategi kelas manual
+    darkMode: 'class',
     content: [
         "./resources/**/*.blade.php",
         "./resources/**/*.js",
@@ -9,7 +9,7 @@
     theme: {
         extend: {
         fontFamily: {
-            'poppins': ['Poppins', 'sans-serif'], // Tambahkan font Poppins untuk tampilan modern
+            'poppins': ['Poppins', 'sans-serif'], 
         },
         },
     },
